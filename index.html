@@ -11,7 +11,8 @@
     .conn-btn.bt { background: #7c3aed; }
     .disc-btn { background: #ef4444; color: white; display: none; }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; background: #1e1e24; padding: 15px; border-radius: 12px; }
-    .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; }
+    .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; cursor: pointer; }
+    .ir-btn:active { opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -24,8 +25,7 @@
   </div>
   <p id="status" style="color: #ef4444;">Déconnecté</p>
   <p style="font-size: 11px; color: #888; max-width: 320px; margin: 0 auto 20px;">
-    <strong>USB / Serial :</strong> Sélectionne le port COM (Câble USB ou HC-05 appairé sous Windows).<br>
-    <strong>Bluetooth Web :</strong> Connexion directe sans appairage préalable (Chrome Android / PC).
+    Connecte la carte en USB ou Bluetooth avant d'envoyer une commande.
   </p>
 
   <div class="grid">
@@ -67,11 +67,11 @@
   </div>
 
   <script>
-    let connectionType = null; // 'serial' ou 'bluetooth'
+    let connectionType = null;
     let serialPort, serialWriter;
     let btDevice, btCharacteristic;
 
-    // --- Connexion Serial (USB / Port COM Bluetooth) ---
+    // --- Connexion Serial (USB / COM) ---
     async function connectSerial() {
       if (!("serial" in navigator)) {
         alert("Web Serial non supporté. Utilise Chrome ou Edge.");
@@ -86,50 +86,52 @@
         updateStatus(true, 'USB / Serial');
       } catch (e) {
         console.error(e);
-        alert('Erreur de connexion Serial : ' + e);
+        alert('Erreur Serial : ' + e);
       }
     }
 
     // --- Connexion Bluetooth Web Directe ---
     async function connectBluetooth() {
       if (!("bluetooth" in navigator)) {
-        alert("Web Bluetooth non supporté. Utilise Chrome (sur Android/PC).");
+        alert("Web Bluetooth non supporté sur ce navigateur.");
         return;
       }
       try {
         await disconnect();
-        // Recherche des périphériques exposant un service UART Serie (ex: HC-05, HM-10, ESP32)
         btDevice = await navigator.bluetooth.requestDevice({
           acceptAllDevices: true,
           optionalServices: [
-            '00001101-0000-1000-8000-00805f9b34fb', // SPP Standard (HC-05/HC-06)
-            '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  # Nordic UART Service (BLE/ESP32)
+            '00001101-0000-1000-8000-00805f9b34fb', // SPP Standard (HC-05/06)
+            '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  // Nordic UART (BLE)
           ]
         });
 
         btDevice.addEventListener('gattserverdisconnected', onDisconnected);
         const server = await btDevice.gatt.connect();
-
-        // Récupération du service et de la caractéristique d'écriture
         const services = await server.getPrimaryServices();
-        if (services.length === 0) throw new Error("Aucun service Bluetooth disponible.");
+
+        if (services.length === 0) throw new Error("Aucun service trouvé.");
 
         const characteristics = await services[0].getCharacteristics();
-        // Recherche d'une caractéristique acceptant l'écriture
         btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
-        if (!btCharacteristic) throw new Error("Aucune caractéristique d'écriture trouvée.");
+        if (!btCharacteristic) throw new Error("Caractéristique d'écriture introuvable.");
 
         connectionType = 'bluetooth';
-        updateStatus(true, `Bluetooth (${btDevice.name || 'Appareil'})`);
+        updateStatus(true, `BT (${btDevice.name || 'Appareil'})`);
       } catch (e) {
         console.error(e);
-        alert('Erreur de connexion Bluetooth : ' + e);
+        alert('Erreur Bluetooth : ' + e);
       }
     }
 
     // --- Envoi de commande ---
     async function send(cmd) {
+      if (!connectionType) {
+        alert('Connecte la carte d\'abord (USB ou Bluetooth) !');
+        return;
+      }
+
       const payload = new TextEncoder().encode(cmd + '\n');
 
       try {
@@ -137,27 +139,29 @@
           await serialWriter.write(payload);
         } else if (connectionType === 'bluetooth' && btCharacteristic) {
           await btCharacteristic.writeValue(payload);
-        } else {
-          alert('Connecte un appareil d\'abord !');
         }
       } catch (e) {
         console.error("Erreur d'envoi :", e);
-        alert("Échec de l'envoi de la commande.");
+        alert("Erreur lors de l'envoi de la commande.");
       }
     }
 
     // --- Déconnexion ---
     async function disconnect() {
-      if (serialWriter) {
-        await serialWriter.releaseLock();
-        serialWriter = null;
-      }
-      if (serialPort) {
-        await serialPort.close();
-        serialPort = null;
-      }
-      if (btDevice && btDevice.gatt.connected) {
-        btDevice.gatt.disconnect();
+      try {
+        if (serialWriter) {
+          await serialWriter.releaseLock();
+          serialWriter = null;
+        }
+        if (serialPort) {
+          await serialPort.close();
+          serialPort = null;
+        }
+        if (btDevice && btDevice.gatt.connected) {
+          btDevice.gatt.disconnect();
+        }
+      } catch(e) {
+        console.error(e);
       }
       onDisconnected();
     }
@@ -166,6 +170,8 @@
       connectionType = null;
       btDevice = null;
       btCharacteristic = null;
+      serialPort = null;
+      serialWriter = null;
       updateStatus(false);
     }
 
