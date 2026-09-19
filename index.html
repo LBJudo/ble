@@ -5,27 +5,24 @@
   <title>Télécommande IR Osram</title>
   <style>
     body { font-family: sans-serif; background: #121214; color: #fff; text-align: center; padding: 20px; }
-    .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .conn-btn { background: #2563eb; color: white; }
     .conn-btn.bt { background: #7c3aed; }
-    .disc-btn { background: #ef4444; color: white; display: none; }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; background: #1e1e24; padding: 15px; border-radius: 12px; }
-    .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; cursor: pointer; }
-    .ir-btn:active { opacity: 0.7; }
+    .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; }
   </style>
 </head>
 <body>
 
   <h2>Télécommande IR Osram</h2>
   <div class="btn-group">
-    <button class="conn-btn" onclick="connectSerial()">USB (Port COM)</button>
-    <button class="conn-btn bt" onclick="connectBluetooth()">Bluetooth Web</button>
-    <button id="disconnectBtn" class="disc-btn" onclick="disconnect()">Déconnecter</button>
+    <button class="conn-btn" onclick="connectSerial()">USB (Câble)</button>
+    <button class="conn-btn bt" onclick="connectSerial()">Bluetooth (HC-05)</button>
   </div>
   <p id="status" style="color: #ef4444;">Déconnecté</p>
   <p style="font-size: 11px; color: #888; max-width: 320px; margin: 0 auto 20px;">
-    Connecte la carte en USB ou Bluetooth avant d'envoyer une commande.
+    Les deux boutons ouvrent la même fenêtre de sélection : choisis le port COM du câble USB, ou celui du HC-05 (une fois appairé dans les paramètres Bluetooth de Windows).
   </p>
 
   <div class="grid">
@@ -67,127 +64,32 @@
   </div>
 
   <script>
-    let connectionType = null;
-    let serialPort, serialWriter;
-    let btDevice, btCharacteristic;
+    let port, writer;
 
-    // --- Connexion Serial (USB / COM) ---
     async function connectSerial() {
       if (!("serial" in navigator)) {
-        alert("Web Serial non supporté. Utilise Chrome ou Edge.");
+        alert("Web Serial non supporté. Utilise Chrome ou Edge sur PC.");
         return;
       }
       try {
-        await disconnect();
-        serialPort = await navigator.serial.requestPort();
-        await serialPort.open({ baudRate: 9600 });
-        serialWriter = serialPort.writable.getWriter();
-        connectionType = 'serial';
-        updateStatus(true, 'USB / Serial');
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        writer = port.writable.getWriter();
+        document.getElementById('status').innerText = 'Connecté';
+        document.getElementById('status').style.color = '#22c55e';
       } catch (e) {
         console.error(e);
-        alert('Erreur Serial : ' + e);
+        alert('Erreur de connexion : ' + e);
       }
     }
 
-    // --- Connexion Bluetooth Web Directe ---
-    async function connectBluetooth() {
-      if (!("bluetooth" in navigator)) {
-        alert("Web Bluetooth non supporté sur ce navigateur.");
-        return;
-      }
-      try {
-        await disconnect();
-        btDevice = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: [
-            '00001101-0000-1000-8000-00805f9b34fb', // SPP Standard (HC-05/06)
-            '6e400001-b5a3-f393-e0a9-e50e24dcca9e'  // Nordic UART (BLE)
-          ]
-        });
-
-        btDevice.addEventListener('gattserverdisconnected', onDisconnected);
-        const server = await btDevice.gatt.connect();
-        const services = await server.getPrimaryServices();
-
-        if (services.length === 0) throw new Error("Aucun service trouvé.");
-
-        const characteristics = await services[0].getCharacteristics();
-        btCharacteristic = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
-
-        if (!btCharacteristic) throw new Error("Caractéristique d'écriture introuvable.");
-
-        connectionType = 'bluetooth';
-        updateStatus(true, `BT (${btDevice.name || 'Appareil'})`);
-      } catch (e) {
-        console.error(e);
-        alert('Erreur Bluetooth : ' + e);
-      }
-    }
-
-    // --- Envoi de commande ---
     async function send(cmd) {
-      if (!connectionType) {
+      if (!writer) {
         alert('Connecte la carte d\'abord (USB ou Bluetooth) !');
         return;
       }
-
-      const payload = new TextEncoder().encode(cmd + '\n');
-
-      try {
-        if (connectionType === 'serial' && serialWriter) {
-          await serialWriter.write(payload);
-        } else if (connectionType === 'bluetooth' && btCharacteristic) {
-          await btCharacteristic.writeValue(payload);
-        }
-      } catch (e) {
-        console.error("Erreur d'envoi :", e);
-        alert("Erreur lors de l'envoi de la commande.");
-      }
-    }
-
-    // --- Déconnexion ---
-    async function disconnect() {
-      try {
-        if (serialWriter) {
-          await serialWriter.releaseLock();
-          serialWriter = null;
-        }
-        if (serialPort) {
-          await serialPort.close();
-          serialPort = null;
-        }
-        if (btDevice && btDevice.gatt.connected) {
-          btDevice.gatt.disconnect();
-        }
-      } catch(e) {
-        console.error(e);
-      }
-      onDisconnected();
-    }
-
-    function onDisconnected() {
-      connectionType = null;
-      btDevice = null;
-      btCharacteristic = null;
-      serialPort = null;
-      serialWriter = null;
-      updateStatus(false);
-    }
-
-    function updateStatus(isConnected, name = '') {
-      const statusEl = document.getElementById('status');
-      const discBtn = document.getElementById('disconnectBtn');
-
-      if (isConnected) {
-        statusEl.innerText = `Connecté : ${name}`;
-        statusEl.style.color = '#22c55e';
-        discBtn.style.display = 'inline-block';
-      } else {
-        statusEl.innerText = 'Déconnecté';
-        statusEl.style.color = '#ef4444';
-        discBtn.style.display = 'none';
-      }
+      const data = new TextEncoder().encode(cmd + '\n');
+      await writer.write(data);
     }
   </script>
 </body>
