@@ -1,61 +1,86 @@
-#include <Arduino.h>
-#include <IRremote.hpp>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Télécommande IR Osram</title>
+  <style>
+    body { font-family: sans-serif; background: #121214; color: #fff; text-align: center; padding: 20px; }
+    .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .conn-btn { background: #2563eb; color: white; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; background: #1e1e24; padding: 15px; border-radius: 12px; }
+    .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; }
+  </style>
+</head>
+<body>
 
-#define IR_SEND_PIN 3    // LED IR sur la pin D3
-#define OSRAM_ADDR 0x00  // Adresse télécommande Osram
+  <h2>Télécommande IR Osram</h2>
+  <div class="btn-group">
+    <button class="conn-btn" onclick="connectUSB()">USB (Câble)</button>
+  </div>
+  <p id="status" style="color: #ef4444;">Déconnecté</p>
 
-void setup() {
-  Serial.begin(9600);
-  IrSender.begin(IR_SEND_PIN);
-  Serial.println("Arduino IR Osram 24 Touches Pret !");
-}
+  <div class="grid">
+    <!-- Ligne 1 -->
+    <button class="ir-btn" style="background:#4b5563" onclick="send('UP')">☀️ +</button>
+    <button class="ir-btn" style="background:#4b5563" onclick="send('DOWN')">☀️ -</button>
+    <button class="ir-btn" style="background:#1f2937" onclick="send('OFF')">OFF</button>
+    <button class="ir-btn" style="background:#dc2626" onclick="send('POWER')">ON</button>
 
-void sendCmd(uint8_t command) {
-  IrSender.sendNEC(OSRAM_ADDR, command, 0);
-  Serial.print("Commande IR envoyee : 0x");
-  Serial.println(command, HEX);
-}
+    <!-- Ligne 2 -->
+    <button class="ir-btn" style="background:#ef4444" onclick="send('R')">R</button>
+    <button class="ir-btn" style="background:#22c55e" onclick="send('G')">G</button>
+    <button class="ir-btn" style="background:#3b82f6" onclick="send('B')">B</button>
+    <button class="ir-btn" style="background:#f8fafc; color:#000" onclick="send('WHITE')">W</button>
 
-void loop() {
-  if (Serial.available() > 0) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
-    cmd.toUpperCase(); // Accepte majuscules et minuscules
+    <!-- Ligne 3 -->
+    <button class="ir-btn" style="background:#f97316" onclick="send('R1')">R1</button>
+    <button class="ir-btn" style="background:#10b981" onclick="send('G1')">G1</button>
+    <button class="ir-btn" style="background:#6366f1" onclick="send('B1')">B1</button>
+    <button class="ir-btn" style="background:#374151" onclick="send('FLASH')">FLASH</button>
 
-    // Ligne 1 : Contrôle & Alimentation
-    if (cmd == "UP" || cmd == "BRIGHTNESS_UP" || cmd == "LUM+" || cmd == "+") sendCmd(0x00);
-    else if (cmd == "DOWN" || cmd == "BRIGHTNESS_DOWN" || cmd == "LUM-" || cmd == "-") sendCmd(0x02);
-    else if (cmd == "POWER" || cmd == "ON") sendCmd(0x07);
-    else if (cmd == "OFF") sendCmd(0x06);
+    <!-- Ligne 4 -->
+    <button class="ir-btn" style="background:#fb923c" onclick="send('R2')">R2</button>
+    <button class="ir-btn" style="background:#14b8a6" onclick="send('G2')">G2</button>
+    <button class="ir-btn" style="background:#8b5cf6" onclick="send('B2')">B2</button>
+    <button class="ir-btn" style="background:#374151" onclick="send('STROBE')">STROBE</button>
 
-    // Ligne 2 : Couleurs principales
-    else if (cmd == "R" || cmd == "RED") sendCmd(0x08);
-    else if (cmd == "G" || cmd == "GREEN") sendCmd(0x04);
-    else if (cmd == "B" || cmd == "BLUE") sendCmd(0x0A);
-    else if (cmd == "WHITE" || cmd == "W") sendCmd(0x05);
+    <!-- Ligne 5 -->
+    <button class="ir-btn" style="background:#fdba74" onclick="send('R3')">R3</button>
+    <button class="ir-btn" style="background:#06b6d4" onclick="send('G3')">G3</button>
+    <button class="ir-btn" style="background:#a855f7" onclick="send('B3')">B3</button>
+    <button class="ir-btn" style="background:#374151" onclick="send('SMOOTH')">SMOOTH</button>
 
-    // Ligne 3 à 6 : Nuances Rouges / Oranges
-    else if (cmd == "R1") sendCmd(0x09);
-    else if (cmd == "R2") sendCmd(0x0D);
-    else if (cmd == "R3") sendCmd(0x11);
-    else if (cmd == "R4") sendCmd(0x15);
+    <!-- Ligne 6 -->
+    <button class="ir-btn" style="background:#facc15; color:#000" onclick="send('R4')">R4</button>
+    <button class="ir-btn" style="background:#0284c7" onclick="send('G4')">G4</button>
+    <button class="ir-btn" style="background:#d946ef" onclick="send('B4')">B4</button>
+    <button class="ir-btn" style="background:#374151" onclick="send('MODE')">MODE</button>
+  </div>
 
-    // Ligne 3 à 6 : Nuances Vertes / Cyans
-    else if (cmd == "G1") sendCmd(0x0E);
-    else if (cmd == "G2") sendCmd(0x12);
-    else if (cmd == "G3") sendCmd(0x16);
-    else if (cmd == "G4") sendCmd(0x1A);
+  <script>
+    let port, writer;
 
-    // Ligne 3 à 6 : Nuances Bleues / Violettes
-    else if (cmd == "B1") sendCmd(0x10);
-    else if (cmd == "B2") sendCmd(0x14);
-    else if (cmd == "B3") sendCmd(0x18);
-    else if (cmd == "B4") sendCmd(0x1C);
+    async function connectUSB() {
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 9600 });
+        writer = port.writable.getWriter();
+        document.getElementById('status').innerText = 'Connecté (USB)';
+        document.getElementById('status').style.color = '#22c55e';
+      } catch (e) {
+        alert('Erreur de connexion : ' + e);
+      }
+    }
 
-    // Effets spéciaux
-    else if (cmd == "FLASH") sendCmd(0x0F);
-    else if (cmd == "STROBE") sendCmd(0x13);
-    else if (cmd == "SMOOTH") sendCmd(0x17);
-    else if (cmd == "MODE") sendCmd(0x0B);
-  }
-}
+    async function send(cmd) {
+      if (!writer) {
+        alert('Connecte la carte d\'abord !');
+        return;
+      }
+      const data = new TextEncoder().encode(cmd + '\n');
+      await writer.write(data);
+    }
+  </script>
+</body>
+</html>
