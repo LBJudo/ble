@@ -1,115 +1,61 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Télécommande IR</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    h1 { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; opacity: 0.9; }
-    .status { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #94a3b8; background: #1e293b; padding: 8px 16px; border-radius: 20px; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
-    .dot.on { background: #22c55e; }
-    .conn-btns { display: flex; gap: 10px; margin-bottom: 24px; }
-    .btn-conn { background: #2563eb; color: #fff; border: none; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
-    .btn-conn.ble { background: #9333ea; }
-    .btn-conn:active { transform: scale(0.96); }
-    .remote { background: #1e293b; padding: 20px; border-radius: 20px; display: grid; grid-template-columns: repeat(4, 56px); gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
-    button.btn { width: 56px; height: 48px; border: none; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; color: #fff; }
-    button.btn:active { transform: scale(0.92); }
-    .b-up, .b-down { background: #475569; }
-    .b-off { background: #334155; }
-    .b-pw { background: #dc2626; }
-    .b-r { background: #ef4444; } .b-g { background: #22c55e; } .b-b { background: #3b82f6; } .b-w { background: #f8fafc; color: #0f172a; }
-    .b-r1 { background: #f97316; } .b-r2 { background: #fb923c; } .b-r3 { background: #fba556; } .b-r4 { background: #facc15; color: #0f172a; }
-    .b-g1 { background: #10b981; } .b-g2 { background: #14b8a6; } .b-g3 { background: #06b6d4; } .b-g4 { background: #0891b2; }
-    .b-b1 { background: #6366f1; } .b-b2 { background: #8b5cf6; } .b-b3 { background: #a855f7; } .b-b4 { background: #d946ef; }
-    .b-fx { background: #64748b; font-size: 0.65rem; }
-  </style>
-</head>
-<body>
+#include <Arduino.h>
+#include <IRremote.hpp>
 
-  <h1>Télécommande IR</h1>
+#define IR_SEND_PIN 3    // LED IR sur la pin D3
+#define OSRAM_ADDR 0x00  // Adresse télécommande Osram
 
-  <div class="status">
-    <div id="dot" class="dot"></div>
-    <span id="txt">Déconnecté</span>
-  </div>
+void setup() {
+  Serial.begin(9600);
+  IrSender.begin(IR_SEND_PIN);
+  Serial.println("Arduino IR Osram 24 Touches Pret !");
+}
 
-  <div class="conn-btns">
-    <button class="btn-conn" onclick="connectUSB()">USB (Câble)</button>
-    <button class="btn-conn ble" onclick="connectBLE()">Bluetooth (BLE)</button>
-  </div>
+void sendCmd(uint8_t command) {
+  IrSender.sendNEC(OSRAM_ADDR, command, 0);
+  Serial.print("Commande IR envoyee : 0x");
+  Serial.println(command, HEX);
+}
 
-  <div class="remote">
-    <button class="btn b-up" onclick="send('UP')">☀️+</button>
-    <button class="btn b-down" onclick="send('DOWN')">☀️-</button>
-    <button class="btn b-off" onclick="send('OFF')">OFF</button>
-    <button class="btn b-pw" onclick="send('POWER')">ON</button>
+void loop() {
+  if (Serial.available() > 0) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    cmd.toUpperCase(); // Accepte majuscules et minuscules
 
-    <button class="btn b-r" onclick="send('R')">R</button>
-    <button class="btn b-g" onclick="send('G')">G</button>
-    <button class="btn b-b" onclick="send('B')">B</button>
-    <button class="btn b-w" onclick="send('WHITE')">W</button>
+    // Ligne 1 : Contrôle & Alimentation
+    if (cmd == "UP" || cmd == "BRIGHTNESS_UP" || cmd == "LUM+" || cmd == "+") sendCmd(0x00);
+    else if (cmd == "DOWN" || cmd == "BRIGHTNESS_DOWN" || cmd == "LUM-" || cmd == "-") sendCmd(0x02);
+    else if (cmd == "POWER" || cmd == "ON") sendCmd(0x07);
+    else if (cmd == "OFF") sendCmd(0x06);
 
-    <button class="btn b-r1" onclick="send('R1')"></button>
-    <button class="btn b-g1" onclick="send('G1')"></button>
-    <button class="btn b-b1" onclick="send('B1')"></button>
-    <button class="btn b-fx" onclick="send('FLASH')">FLASH</button>
+    // Ligne 2 : Couleurs principales
+    else if (cmd == "R" || cmd == "RED") sendCmd(0x08);
+    else if (cmd == "G" || cmd == "GREEN") sendCmd(0x04);
+    else if (cmd == "B" || cmd == "BLUE") sendCmd(0x0A);
+    else if (cmd == "WHITE" || cmd == "W") sendCmd(0x05);
 
-    <button class="btn b-r2" onclick="send('R2')"></button>
-    <button class="btn b-g2" onclick="send('G2')"></button>
-    <button class="btn b-b2" onclick="send('B2')"></button>
-    <button class="btn b-fx" onclick="send('STROBE')">STROBE</button>
+    // Ligne 3 à 6 : Nuances Rouges / Oranges
+    else if (cmd == "R1") sendCmd(0x09);
+    else if (cmd == "R2") sendCmd(0x0D);
+    else if (cmd == "R3") sendCmd(0x11);
+    else if (cmd == "R4") sendCmd(0x15);
 
-    <button class="btn b-r3" onclick="send('R3')"></button>
-    <button class="btn b-g3" onclick="send('G3')"></button>
-    <button class="btn b-b3" onclick="send('B3')"></button>
-    <button class="btn b-fx" onclick="send('SMOOTH')">SMOOTH</button>
+    // Ligne 3 à 6 : Nuances Vertes / Cyans
+    else if (cmd == "G1") sendCmd(0x0E);
+    else if (cmd == "G2") sendCmd(0x12);
+    else if (cmd == "G3") sendCmd(0x16);
+    else if (cmd == "G4") sendCmd(0x1A);
 
-    <button class="btn b-r4" onclick="send('R4')"></button>
-    <button class="btn b-g4" onclick="send('G4')"></button>
-    <button class="btn b-b4" onclick="send('B4')"></button>
-    <button class="btn b-fx" onclick="send('MODE')">MODE</button>
-  </div>
+    // Ligne 3 à 6 : Nuances Bleues / Violettes
+    else if (cmd == "B1") sendCmd(0x10);
+    else if (cmd == "B2") sendCmd(0x14);
+    else if (cmd == "B3") sendCmd(0x18);
+    else if (cmd == "B4") sendCmd(0x1C);
 
-  <script>
-    let usbWriter, bleChar;
-
-    async function connectUSB() {
-      try {
-        const port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 9600 });
-        const encoder = new TextEncoderStream();
-        encoder.readable.pipeTo(port.writable);
-        usbWriter = encoder.writable.getWriter();
-        setStatus("Connecté USB");
-      } catch (e) { console.error(e); }
-    }
-
-    async function connectBLE() {
-      try {
-        const device = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ["0000ffe0-0000-1000-8000-00805f9b34fb"]
-        });
-        const server = await device.gatt.connect();
-        const service = await server.getPrimaryService("0000ffe0-0000-1000-8000-00805f9b34fb");
-        bleChar = await service.getCharacteristic("0000ffe1-0000-1000-8000-00805f9b34fb");
-        setStatus("Connecté BLE");
-      } catch (e) { console.error(e); }
-    }
-
-    function setStatus(msg) {
-      document.getElementById('dot').classList.add('on');
-      document.getElementById('txt').innerText = msg;
-    }
-
-    async function send(cmd) {
-      if (usbWriter) await usbWriter.write(cmd + "\n");
-      else if (bleChar) await bleChar.writeValue(new TextEncoder().encode(cmd + "\n"));
-    }
-  </script>
-</body>
-</html>
+    // Effets spéciaux
+    else if (cmd == "FLASH") sendCmd(0x0F);
+    else if (cmd == "STROBE") sendCmd(0x13);
+    else if (cmd == "SMOOTH") sendCmd(0x17);
+    else if (cmd == "MODE") sendCmd(0x0B);
+  }
+}
