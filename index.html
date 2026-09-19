@@ -1,0 +1,201 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text-main);
+}
+
+p.subtitle {
+  font-size: 0.875rem;
+  color: var(--text-sub);
+}
+
+.status-card {
+  background: var(--card-bg);
+  padding: 12px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ef4444; /* Rouge par défaut */
+  box-shadow: 0 0 8px #ef4444;
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.status-dot.connected {
+  background-color: #22c55e; /* Vert */
+  box-shadow: 0 0 8px #22c55e;
+}
+
+.status-text {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.btn-connect {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s ease;
+  margin-bottom: 24px;
+}
+
+.btn-connect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.btn-connect:active {
+  transform: translateY(1px);
+}
+
+/* Grille de la télécommande */
+.remote {
+  background: var(--card-bg);
+  padding: 24px;
+  border-radius: 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 64px);
+  gap: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+}
+
+button.ir-btn {
+  width: 64px;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  transition: all 0.15s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 3px 6px rgba(0,0,0,0.2);
+}
+
+button.ir-btn:active {
+  transform: scale(0.92);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+}
+
+/* Boutons de commandes de base */
+.btn-up, .btn-down { background-color: #475569; color: #f8fafc; }
+.btn-off { background-color: #334155; color: #f8fafc; }
+.btn-power { background-color: #dc2626; color: #ffffff; }
+
+/* Couleurs principales */
+.btn-r { background-color: #ef4444; }
+.btn-g { background-color: #22c55e; }
+.btn-b { background-color: #3b82f6; }
+.btn-w { background-color: #f8fafc; color: #0f172a; text-shadow: none; }
+
+/* Nuances de Rouge */
+.btn-r1 { background-color: #f97316; }
+.btn-r2 { background-color: #fb923c; }
+.btn-r3 { background-color: #fba556; }
+.btn-r4 { background-color: #facc15; color: #0f172a; text-shadow: none; }
+
+/* Nuances de Vert */
+.btn-g1 { background-color: #10b981; }
+.btn-g2 { background-color: #14b8a6; }
+.btn-g3 { background-color: #06b6d4; }
+.btn-g4 { background-color: #0891b2; }
+
+/* Nuances de Bleu */
+.btn-b1 { background-color: #6366f1; }
+.btn-b2 { background-color: #8b5cf6; }
+.btn-b3 { background-color: #a855f7; }
+.btn-b4 { background-color: #d946ef; }
+
+/* Effets spéciaux */
+.btn-effect { background-color: #64748b; font-size: 0.7rem; letter-spacing: 0.5px; }
+
+/* Modal / Avertissement Web Serial */
+.unsupported-warning {
+  display: none;
+  background-color: #7f1d1d;
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.85rem;
+  text-align: center;
+  max-width: 320px;
+}
+
+
+Connexion HC-05
+
+<!-- Ligne 2 -->
+<button class="ir-btn btn-r" onclick="sendCmd('R')">R</button>
+<button class="ir-btn btn-g" onclick="sendCmd('G')">G</button>
+<button class="ir-btn btn-b" onclick="sendCmd('B')">B</button>
+<button class="ir-btn btn-w" onclick="sendCmd('WHITE')">W</button>
+
+<!-- Ligne 3 -->
+<button class="ir-btn btn-r1" onclick="sendCmd('R1')"></button>
+<button class="ir-btn btn-g1" onclick="sendCmd('G1')"></button>
+<button class="ir-btn btn-b1" onclick="sendCmd('B1')"></button>
+<button class="ir-btn btn-effect" onclick="sendCmd('FLASH')">FLASH</button>
+
+<!-- Ligne 4 -->
+<button class="ir-btn btn-r2" onclick="sendCmd('R2')"></button>
+<button class="ir-btn btn-g2" onclick="sendCmd('G2')"></button>
+<button class="ir-btn btn-b2" onclick="sendCmd('B2')"></button>
+<button class="ir-btn btn-effect" onclick="sendCmd('STROBE')">STROBE</button>
+
+<!-- Ligne 5 -->
+<button class="ir-btn btn-r3" onclick="sendCmd('R3')"></button>
+<button class="ir-btn btn-g3" onclick="sendCmd('G3')"></button>
+<button class="ir-btn btn-b3" onclick="sendCmd('B3')"></button>
+<button class="ir-btn btn-effect" onclick="sendCmd('SMOOTH')">SMOOTH</button>
+
+<!-- Ligne 6 -->
+<button class="ir-btn btn-r4" onclick="sendCmd('R4')"></button>
+<button class="ir-btn btn-g4" onclick="sendCmd('G4')"></button>
+<button class="ir-btn btn-b4" onclick="sendCmd('B4')"></button>
+<button class="ir-btn btn-effect" onclick="sendCmd('MODE')">MODE</button>
