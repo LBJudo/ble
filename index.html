@@ -5,9 +5,10 @@
   <title>Télécommande IR Osram</title>
   <style>
     body { font-family: sans-serif; background: #121214; color: #fff; text-align: center; padding: 20px; }
-    .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+    .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
     button { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .conn-btn { background: #2563eb; color: white; }
+    .conn-btn.bt { background: #7c3aed; }
     .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; background: #1e1e24; padding: 15px; border-radius: 12px; }
     .ir-btn { height: 45px; border-radius: 6px; color: white; text-shadow: 0 1px 2px #000; font-size: 12px; }
   </style>
@@ -16,9 +17,13 @@
 
   <h2>Télécommande IR Osram</h2>
   <div class="btn-group">
-    <button class="conn-btn" onclick="connectUSB()">USB (Câble)</button>
+    <button class="conn-btn" onclick="connectSerial()">USB (Câble)</button>
+    <button class="conn-btn bt" onclick="connectSerial()">Bluetooth (HC-05)</button>
   </div>
   <p id="status" style="color: #ef4444;">Déconnecté</p>
+  <p style="font-size: 11px; color: #888; max-width: 320px; margin: 0 auto 20px;">
+    Les deux boutons ouvrent la même fenêtre de sélection : choisis le port COM du câble USB, ou celui du HC-05 (une fois appairé dans les paramètres Bluetooth de Windows).
+  </p>
 
   <div class="grid">
     <!-- Ligne 1 -->
@@ -61,21 +66,26 @@
   <script>
     let port, writer;
 
-    async function connectUSB() {
+    async function connectSerial() {
+      if (!("serial" in navigator)) {
+        alert("Web Serial non supporté. Utilise Chrome ou Edge sur PC.");
+        return;
+      }
       try {
         port = await navigator.serial.requestPort();
         await port.open({ baudRate: 9600 });
         writer = port.writable.getWriter();
-        document.getElementById('status').innerText = 'Connecté (USB)';
+        document.getElementById('status').innerText = 'Connecté';
         document.getElementById('status').style.color = '#22c55e';
       } catch (e) {
+        console.error(e);
         alert('Erreur de connexion : ' + e);
       }
     }
 
     async function send(cmd) {
       if (!writer) {
-        alert('Connecte la carte d\'abord !');
+        alert('Connecte la carte d\'abord (USB ou Bluetooth) !');
         return;
       }
       const data = new TextEncoder().encode(cmd + '\n');
