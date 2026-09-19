@@ -3,118 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Télécommande IR HC-05</title>
+  <title>Télécommande IR</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-    body { background-color: #121212; color: #fff; font-family: system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    header { text-align: center; margin-bottom: 24px; }
-    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
-    p.subtitle { font-size: 0.875rem; color: #aaa; }
-    .status-card { background: #1e1e1e; padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444; transition: background-color 0.3s; }
-    .status-dot.connected { background-color: #22c55e; }
-    .btn-connect { background: linear-gradient(135deg, #0284c7, #2563eb); color: white; border: none; padding: 12px 24px; font-size: 0.95rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; margin-bottom: 24px; }
-    .btn-connect:hover { transform: translateY(-1px); }
-    .remote { background: #1e1e1e; padding: 24px; border-radius: 24px; display: grid; grid-template-columns: repeat(4, 64px); gap: 14px; border: 1px solid rgba(255,255,255,0.08); }
-    button.ir-btn { width: 64px; height: 52px; border: none; border-radius: 12px; font-weight: 700; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; transition: all 0.15s ease; }
-    button.ir-btn:active { transform: scale(0.92); }
-    .btn-up, .btn-down { background-color: #475569; }
-    .btn-off { background-color: #334155; }
-    .btn-power { background-color: #dc2626; }
-    .btn-r { background-color: #ef4444; }
-    .btn-g { background-color: #22c55e; }
-    .btn-b { background-color: #3b82f6; }
-    .btn-w { background-color: #f8fafc; color: #0f172a; }
-    .btn-r1 { background-color: #f97316; }
-    .btn-r2 { background-color: #fb923c; }
-    .btn-r3 { background-color: #fba556; }
-    .btn-r4 { background-color: #facc15; color: #0f172a; }
-    .btn-g1 { background-color: #10b981; }
-    .btn-g2 { background-color: #14b8a6; }
-    .btn-g3 { background-color: #06b6d4; }
-    .btn-g4 { background-color: #0891b2; }
-    .btn-b1 { background-color: #6366f1; }
-    .btn-b2 { background-color: #8b5cf6; }
-    .btn-b3 { background-color: #a855f7; }
-    .btn-b4 { background-color: #d946ef; }
-    .btn-effect { background-color: #64748b; font-size: 0.7rem; }
+    * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    h1 { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; opacity: 0.9; }
+    .status { display: flex; align-items: center; gap: 8px; margin-bottom: 20px; font-size: 0.85rem; color: #94a3b8; background: #1e293b; padding: 8px 16px; border-radius: 20px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #ef4444; }
+    .dot.on { background: #22c55e; }
+    .conn-btns { display: flex; gap: 10px; margin-bottom: 24px; }
+    .btn-conn { background: #2563eb; color: #fff; border: none; padding: 10px 14px; font-size: 0.8rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .btn-conn.ble { background: #9333ea; }
+    .btn-conn:active { transform: scale(0.96); }
+    .remote { background: #1e293b; padding: 20px; border-radius: 20px; display: grid; grid-template-columns: repeat(4, 56px); gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
+    button.btn { width: 56px; height: 48px; border: none; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; color: #fff; }
+    button.btn:active { transform: scale(0.92); }
+    .b-up, .b-down { background: #475569; }
+    .b-off { background: #334155; }
+    .b-pw { background: #dc2626; }
+    .b-r { background: #ef4444; } .b-g { background: #22c55e; } .b-b { background: #3b82f6; } .b-w { background: #f8fafc; color: #0f172a; }
+    .b-r1 { background: #f97316; } .b-r2 { background: #fb923c; } .b-r3 { background: #fba556; } .b-r4 { background: #facc15; color: #0f172a; }
+    .b-g1 { background: #10b981; } .b-g2 { background: #14b8a6; } .b-g3 { background: #06b6d4; } .b-g4 { background: #0891b2; }
+    .b-b1 { background: #6366f1; } .b-b2 { background: #8b5cf6; } .b-b3 { background: #a855f7; } .b-b4 { background: #d946ef; }
+    .b-fx { background: #64748b; font-size: 0.65rem; }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Télécommande LED IR</h1>
-    <p class="subtitle">Contrôle HC-05 via Web Serial</p>
-  </header>
+  <h1>Télécommande IR</h1>
 
-  <div class="status-card">
-    <div id="statusDot" class="status-dot"></div>
-    <span id="statusText" style="font-size: 0.875rem;">Déconnecté</span>
+  <div class="status">
+    <div id="dot" class="dot"></div>
+    <span id="txt">Déconnecté</span>
   </div>
 
-  <button class="btn-connect" onclick="connectSerial()">Connexion Bluetooth (Série)</button>
+  <div class="conn-btns">
+    <button class="btn-conn" onclick="connectUSB()">USB (Câble)</button>
+    <button class="btn-conn ble" onclick="connectBLE()">Bluetooth (BLE)</button>
+  </div>
 
   <div class="remote">
-    <button class="ir-btn btn-up" onclick="sendCmd('UP')">☀️ +</button>
-    <button class="ir-btn btn-down" onclick="sendCmd('DOWN')">☀️ -</button>
-    <button class="ir-btn btn-off" onclick="sendCmd('OFF')">OFF</button>
-    <button class="ir-btn btn-power" onclick="sendCmd('POWER')">ON</button>
+    <button class="btn b-up" onclick="send('UP')">☀️+</button>
+    <button class="btn b-down" onclick="send('DOWN')">☀️-</button>
+    <button class="btn b-off" onclick="send('OFF')">OFF</button>
+    <button class="btn b-pw" onclick="send('POWER')">ON</button>
 
-    <button class="ir-btn btn-r" onclick="sendCmd('R')">R</button>
-    <button class="ir-btn btn-g" onclick="sendCmd('G')">G</button>
-    <button class="ir-btn btn-b" onclick="sendCmd('B')">B</button>
-    <button class="ir-btn btn-w" onclick="sendCmd('WHITE')">W</button>
+    <button class="btn b-r" onclick="send('R')">R</button>
+    <button class="btn b-g" onclick="send('G')">G</button>
+    <button class="btn b-b" onclick="send('B')">B</button>
+    <button class="btn b-w" onclick="send('WHITE')">W</button>
 
-    <button class="ir-btn btn-r1" onclick="sendCmd('R1')"></button>
-    <button class="ir-btn btn-g1" onclick="sendCmd('G1')"></button>
-    <button class="ir-btn btn-b1" onclick="sendCmd('B1')"></button>
-    <button class="ir-btn btn-effect" onclick="sendCmd('FLASH')">FLASH</button>
+    <button class="btn b-r1" onclick="send('R1')"></button>
+    <button class="btn b-g1" onclick="send('G1')"></button>
+    <button class="btn b-b1" onclick="send('B1')"></button>
+    <button class="btn b-fx" onclick="send('FLASH')">FLASH</button>
 
-    <button class="ir-btn btn-r2" onclick="sendCmd('R2')"></button>
-    <button class="ir-btn btn-g2" onclick="sendCmd('G2')"></button>
-    <button class="ir-btn btn-b2" onclick="sendCmd('B2')"></button>
-    <button class="ir-btn btn-effect" onclick="sendCmd('STROBE')">STROBE</button>
+    <button class="btn b-r2" onclick="send('R2')"></button>
+    <button class="btn b-g2" onclick="send('G2')"></button>
+    <button class="btn b-b2" onclick="send('B2')"></button>
+    <button class="btn b-fx" onclick="send('STROBE')">STROBE</button>
 
-    <button class="ir-btn btn-r3" onclick="sendCmd('R3')"></button>
-    <button class="ir-btn btn-g3" onclick="sendCmd('G3')"></button>
-    <button class="ir-btn btn-b3" onclick="sendCmd('B3')"></button>
-    <button class="ir-btn btn-effect" onclick="sendCmd('SMOOTH')">SMOOTH</button>
+    <button class="btn b-r3" onclick="send('R3')"></button>
+    <button class="btn b-g3" onclick="send('G3')"></button>
+    <button class="btn b-b3" onclick="send('B3')"></button>
+    <button class="btn b-fx" onclick="send('SMOOTH')">SMOOTH</button>
 
-    <button class="ir-btn btn-r4" onclick="sendCmd('R4')"></button>
-    <button class="ir-btn btn-g4" onclick="sendCmd('G4')"></button>
-    <button class="ir-btn btn-b4" onclick="sendCmd('B4')"></button>
-    <button class="ir-btn btn-effect" onclick="sendCmd('MODE')">MODE</button>
+    <button class="btn b-r4" onclick="send('R4')"></button>
+    <button class="btn b-g4" onclick="send('G4')"></button>
+    <button class="btn b-b4" onclick="send('B4')"></button>
+    <button class="btn b-fx" onclick="send('MODE')">MODE</button>
   </div>
 
   <script>
-    let port;
-    let writer;
+    let usbWriter, bleChar;
 
-    async function connectSerial() {
-      if (!("serial" in navigator)) {
-        alert("Web Serial n'est pas supporté sur ce navigateur. Utilise Chrome ou Edge sur PC.");
-        return;
-      }
+    async function connectUSB() {
       try {
-        port = await navigator.serial.requestPort();
+        const port = await navigator.serial.requestPort();
         await port.open({ baudRate: 9600 });
-        const textEncoder = new TextEncoderStream();
-        textEncoder.readable.pipeTo(port.writable);
-        writer = textEncoder.writable.getWriter();
-
-        document.getElementById('statusDot').classList.add('connected');
-        document.getElementById('statusText').innerText = "Connecté au HC-05";
-      } catch (err) {
-        console.error("Erreur Série :", err);
-      }
+        const encoder = new TextEncoderStream();
+        encoder.readable.pipeTo(port.writable);
+        usbWriter = encoder.writable.getWriter();
+        setStatus("Connecté USB");
+      } catch (e) { console.error(e); }
     }
 
-    async function sendCmd(cmd) {
-      if (!writer) {
-        alert("Connecte d'abord le Bluetooth !");
-        return;
-      }
-      await writer.write(cmd + "\n");
+    async function connectBLE() {
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ["0000ffe0-0000-1000-8000-00805f9b34fb"]
+        });
+        const server = await device.gatt.connect();
+        const service = await server.getPrimaryService("0000ffe0-0000-1000-8000-00805f9b34fb");
+        bleChar = await service.getCharacteristic("0000ffe1-0000-1000-8000-00805f9b34fb");
+        setStatus("Connecté BLE");
+      } catch (e) { console.error(e); }
+    }
+
+    function setStatus(msg) {
+      document.getElementById('dot').classList.add('on');
+      document.getElementById('txt').innerText = msg;
+    }
+
+    async function send(cmd) {
+      if (usbWriter) await usbWriter.write(cmd + "\n");
+      else if (bleChar) await bleChar.writeValue(new TextEncoder().encode(cmd + "\n"));
     }
   </script>
 </body>
